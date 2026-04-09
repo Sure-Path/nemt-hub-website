@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEMT Hub — Non-Emergency Medical Transportation, Simplified</title>
+  <meta name="description" content="One platform for call centers, health plans, and transport providers to schedule, dispatch, and manage NEMT rides with real-time tracking and automated member notifications." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+      background: #080e1a;
+      color: #e2e8f0;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::selection { background: #3b82f640; }
+    a { text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ── Animations ────────────────────────────────────────── */
+    @keyframes spin    { to { transform: rotate(360deg); } }
+    @keyframes fadeUp  { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes float   { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-12px); } }
+    @keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+    .fade-up { animation: fadeUp 0.8s ease both; }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+    /* ── Nav ────────────────────────────────────────────────── */
+    #navbar {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      padding: 0 32px; transition: all 0.3s;
+    }
+    #navbar.scrolled {
+      background: rgba(8,14,26,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid #1e293b;
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo-icon {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg,#3b82f6,#06b6d4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 900; color: #fff;
+    }
+    .nav-logo-text { font-size: 16px; font-weight: 800; color: #f1f5f9; letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-link { font-size: 13px; font-weight: 600; color: #64748b; background: none; border: none; transition: color 0.15s; }
+    .nav-link:hover { color: #94a3b8; }
+    .nav-signin { font-size: 13px; font-weight: 600; color: #94a3b8; }
+    .nav-cta {
+      background: #3b82f6; border: none; border-radius: 9px;
+      padding: 8px 18px; font-size: 13px; font-weight: 700; color: #fff;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: #2563eb; }
+    .nav-mobile-cta { display: none; }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 100px 32px 60px; position: relative; overflow: hidden; text-align: center;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 80% 60% at 50% 30%, #3b82f618 0%, transparent 70%);
+    }
+    .hero-orb-1 {
+      position: absolute; top: 20%; left: 5%; width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #06b6d412 0%, transparent 70%);
+      animation: float 8s ease-in-out infinite; pointer-events: none;
+    }
+    .hero-orb-2 {
+      position: absolute; bottom: 15%; right: 8%; width: 240px; height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #8b5cf612 0%, transparent 70%);
+      animation: float 10s ease-in-out infinite 2s; pointer-events: none;
+    }
+    .hero-content { max-width: 780px; position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #0f172a; border: 1px solid #1e3a5f; border-radius: 99px;
+      padding: 6px 14px; margin-bottom: 28px;
+    }
+    .hero-badge-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
+      box-shadow: 0 0 8px #4ade80; display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .hero-badge-text { font-size: 12px; font-weight: 600; color: #64748b; }
+    .hero-h1 {
+      font-size: clamp(36px,6vw,64px); font-weight: 900; color: #f1f5f9;
+      line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 20px;
+    }
+    .hero-gradient {
+      background: linear-gradient(135deg,#3b82f6,#06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(16px,2vw,20px); color: #64748b; line-height: 1.7;
+      margin: 0 auto 40px; max-width: 580px;
+    }
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .btn-primary {
+      background: #3b82f6; border: none; border-radius: 12px;
+      padding: 14px 32px; font-size: 16px; font-weight: 800; color: #fff;
+      box-shadow: 0 0 32px #3b82f640; transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #2563eb; box-shadow: 0 0 40px #3b82f660; }
+    .btn-secondary {
+      background: transparent; border: 1px solid #1e293b; border-radius: 12px;
+      padding: 14px 32px; font-size: 16px; font-weight: 700; color: #94a3b8;
+      transition: all 0.2s; display: inline-block;
+    }
+    .btn-secondary:hover { border-color: #334155; color: #e2e8f0; }
+    .hero-note { font-size: 12px; color: #334155; }
+
+    /* ── Stats ──────────────────────────────────────────────── */
+    #stats {
+      border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b;
+      background: #0a1628; padding: 40px 32px;
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
+    .stat { text-align: center; }
+    .stat-value { font-size: clamp(24px,3vw,36px); font-weight: 900; color: #f1f5f9; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: #475569; line-height: 1.5; }
+
+    /* ── Section Headers ────────────────────────────────────── */
+    .section-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 12px; }
+    .section-h2 { font-size: clamp(28px,4vw,42px); font-weight: 900; color: #f1f5f9; letter-spacing: -0.03em; margin-bottom: 14px; }
+    .section-sub { font-size: 16px; color: #64748b; max-width: 500px; margin: 0 auto; }
+    .section-header { text-align: center; margin-bottom: 56px; }
+
+    /* ── Features ───────────────────────────────────────────── */
+    #features { padding: 96px 32px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(300px,1fr)); gap: 16px; }
+    .feature-card {
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 16px;
+      padding: 24px; transition: border-color 0.2s;
+    }
+    .feature-card:hover { border-color: #3b82f640; }
+    .feature-icon { font-size: 28px; margin-bottom: 12px; }
+    .feature-title { font-size: 15px; font-weight: 800; color: #f1f5f9; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .feature-desc { font-size: 13px; color: #64748b; line-height: 1.7; }
+
+    /* ── How It Works ───────────────────────────────────────── */
+    #how-it-works {
+      padding: 80px 32px; background: #0a1628;
+      border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b;
+    }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 16px; }
+    .step { text-align: center; position: relative; }
+    .step-connector {
+      position: absolute; top: 24px; left: 60%; width: 80%; height: 1px;
+      background: linear-gradient(90deg,#1e293b,transparent); z-index: 0;
+    }
+    .step-number {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg,#3b82f6,#06b6d4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; color: #fff;
+      margin: 0 auto 14px; position: relative; z-index: 1;
+    }
+    .step-title { font-size: 13px; font-weight: 800; color: #f1f5f9; margin-bottom: 6px; }
+    .step-desc { font-size: 12px; color: #475569; line-height: 1.6; }
+
+    /* ── Testimonials ───────────────────────────────────────── */
+    #testimonials { padding: 80px 32px; }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(300px,1fr)); gap: 16px; }
+    .testimonial-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 24px; }
+    .testimonial-quote-mark { font-size: 32px; color: #1e3a5f; margin-bottom: 12px; line-height: 1; }
+    .testimonial-quote { font-size: 14px; color: #94a3b8; line-height: 1.7; margin-bottom: 20px; font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg,#3b82f6,#06b6d4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .author-name { font-size: 13px; font-weight: 700; color: #e2e8f0; }
+    .author-title { font-size: 11px; color: #475569; margin-top: 1px; }
+
+    /* ── Pricing ────────────────────────────────────────────── */
+    #pricing {
+      padding: 80px 32px; background: #0a1628;
+      border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b;
+    }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 16px; }
+    .pricing-card {
+      background: #0f172a; border: 1.5px solid #1e293b;
+      border-radius: 18px; padding: 28px 24px; position: relative;
+    }
+    .pricing-card.highlight { background: #0c2a3a; border-color: #3b82f660; box-shadow: 0 0 40px #3b82f620; }
+    .pricing-card.purple { border-color: #1e293b; }
+    .pricing-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: #3b82f6; color: #fff; font-size: 11px; font-weight: 800;
+      border-radius: 99px; padding: 3px 14px; letter-spacing: 0.05em; white-space: nowrap;
+    }
+    .pricing-name { font-size: 14px; font-weight: 700; color: #94a3b8; margin-bottom: 6px; }
+    .pricing-price-row { display: flex; align-items: flex-end; gap: 4px; margin-bottom: 4px; }
+    .pricing-price { font-size: 36px; font-weight: 900; color: #f1f5f9; letter-spacing: -0.03em; }
+    .pricing-period { font-size: 14px; color: #475569; padding-bottom: 6px; }
+    .pricing-rides { font-size: 12px; color: #475569; margin-bottom: 20px; }
+    .pricing-features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .pricing-feature { display: flex; gap: 8px; align-items: flex-start; }
+    .pricing-check { font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+    .pricing-feature-text { font-size: 13px; color: #94a3b8; }
+    .pricing-btn {
+      width: 100%; background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; padding: 11px; font-size: 13px; font-weight: 700;
+      color: #94a3b8; transition: all 0.15s;
+    }
+    .pricing-btn:hover { background: #334155; color: #e2e8f0; }
+    .pricing-btn.primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+    .pricing-btn.primary:hover { background: #2563eb; }
+    .pricing-btn.purple-btn { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
+    .pricing-btn.purple-btn:hover { background: #7c3aed; }
+
+    /* ── CTA Section ────────────────────────────────────────── */
+    #cta {
+      padding: 96px 32px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cta-bg {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 60% 80% at 50% 50%, #3b82f612 0%, transparent 70%);
+    }
+    .cta-content { max-width: 600px; margin: 0 auto; position: relative; z-index: 1; }
+    .cta-h2 { font-size: clamp(28px,4vw,46px); font-weight: 900; color: #f1f5f9; letter-spacing: -0.03em; margin-bottom: 16px; }
+    .cta-sub { font-size: 16px; color: #64748b; margin-bottom: 36px; line-height: 1.6; }
+    .cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .cta-note { font-size: 12px; color: #334155; }
+    .btn-cta-primary {
+      background: #3b82f6; border: none; border-radius: 12px;
+      padding: 15px 36px; font-size: 16px; font-weight: 800; color: #fff;
+      box-shadow: 0 0 40px #3b82f650; transition: all 0.2s;
+    }
+    .btn-cta-primary:hover { background: #2563eb; }
+    .btn-cta-secondary {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 15px 36px; font-size: 16px; font-weight: 700; color: #94a3b8;
+      transition: all 0.2s; display: inline-block;
+    }
+    .btn-cta-secondary:hover { color: #e2e8f0; }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      background: #0a1628; border-top: 1px solid #1e293b; padding: 40px 32px;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo { display: flex; align-items: center; gap: 10px; }
+    .footer-logo-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg,#3b82f6,#06b6d4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900; color: #fff;
+    }
+    .footer-logo-text { font-size: 13px; font-weight: 800; color: #64748b; }
+    .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    .footer-link { font-size: 12px; color: #334155; transition: color 0.15s; }
+    .footer-link:hover { color: #64748b; }
+    .footer-copy { font-size: 12px; color: #1e3a5f; }
+
+    /* ── Modal ──────────────────────────────────────────────── */
+    #modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8); z-index: 200;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    #modal-overlay.open { display: flex; }
+    .modal {
+      background: #0a1628; border: 1px solid #1e293b; border-radius: 20px;
+      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+      padding: 28px; position: relative; animation: slideIn 0.3s ease both;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: #1e293b; border: none; border-radius: 50%;
+      width: 28px; height: 28px; font-size: 16px; color: #94a3b8; line-height: 1;
+    }
+    .modal-title { font-size: 18px; font-weight: 800; color: #f1f5f9; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: #475569; margin-bottom: 22px; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-group { margin-bottom: 0; }
+    .form-label {
+      font-size: 10px; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: 0.09em;
+      display: block; margin-bottom: 5px;
+    }
+    .form-input, .form-select {
+      width: 100%; background: #0a1628; border: 1px solid #1e293b;
+      border-radius: 9px; padding: 10px 13px; font-size: 13px; color: #e2e8f0;
+      outline: none; box-sizing: border-box; font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus { border-color: #3b82f6; }
+    .form-input.error { border-color: #ef4444; }
+    .form-error { font-size: 11px; color: #f87171; margin-top: 3px; }
+    .form-gap { display: flex; flex-direction: column; gap: 13px; }
+    .submit-btn {
+      width: 100%; background: #3b82f6; border: none; border-radius: 11px;
+      padding: 13px; font-size: 14px; font-weight: 800; color: #fff;
+      transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .submit-btn:hover { background: #2563eb; }
+    .submit-btn:disabled { background: #1e293b; color: #475569; cursor: default; }
+    .spinner {
+      width: 14px; height: 14px; border: 2px solid #475569;
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite; display: inline-block;
+    }
+    .modal-success { text-align: center; padding: 20px 0; }
+    .success-emoji { font-size: 52px; margin-bottom: 16px; }
+    .success-title { font-size: 18px; font-weight: 800; color: #f1f5f9; margin-bottom: 8px; }
+    .success-sub { font-size: 13px; color: #64748b; margin-bottom: 24px; line-height: 1.6; }
+    .success-close {
+      background: #3b82f6; border: none; border-radius: 10px;
+      padding: 11px 28px; font-size: 13px; font-weight: 700; color: #fff;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-mobile-cta { display: block; background: #3b82f6; border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 700; color: #fff; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .steps-grid { grid-template-columns: 1fr; }
+      .step-connector { display: none; }
+      .footer-inner { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 0 16px; }
+      #hero { padding: 80px 16px 40px; }
+      .hero-btns { flex-direction: column; align-items: center; }
+      .cta-btns { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar ─────────────────────────────────────────────── -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <div class="nav-logo-icon">N</div>
+        <span class="nav-logo-text">NEMT Hub</span>
+      </div>
+      <div class="nav-links">
+        <button class="nav-link" onclick="scrollTo('features')">Features</button>
+        <button class="nav-link" onclick="scrollTo('how-it-works')">How It Works</button>
+        <button class="nav-link" onclick="scrollTo('pricing')">Pricing</button>
+        <a href="/login" class="nav-signin">Sign In</a>
+        <button class="nav-cta" onclick="openModal()">Request Demo</button>
+      </div>
+      <button class="nav-mobile-cta" onclick="openModal()">Request Demo</button>
+    </div>
+  </nav>
+
+  <!-- ── Hero ───────────────────────────────────────────────── -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-orb-1"></div>
+    <div class="hero-orb-2"></div>
+    <div class="hero-content fade-up">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span class="hero-badge-text">Now serving 50+ NEMT organizations across the US</span>
+      </div>
+      <h1 class="hero-h1">
+        Non-Emergency Medical<br>
+        <span class="hero-gradient">Transportation, Simplified</span>
+      </h1>
+      <p class="hero-sub">
+        One platform for call centers, health plans, and transport providers to schedule, dispatch, and manage NEMT rides — with real-time tracking and automated member notifications.
+      </p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="openModal()">Request a Demo →</button>
+        <a href="/signup" class="btn-secondary">Start Free Trial</a>
+      </div>
+      <p class="hero-note">No credit card required &nbsp;·&nbsp; Free 30-day trial &nbsp;·&nbsp; Setup in under 10 minutes</p>
+    </div>
+  </section>
+
+  <!-- ── Stats ──────────────────────────────────────────────── -->
+  <section id="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-value">94%</div><div class="stat-label">Average on-time rate across our network</div></div>
+        <div class="stat"><div class="stat-value">2 min</div><div class="stat-label">Average ride scheduling time</div></div>
+        <div class="stat"><div class="stat-value">40%</div><div class="stat-label">Reduction in administrative calls</div></div>
+        <div class="stat"><div class="stat-value">HIPAA</div><div class="stat-label">Compliant from day one</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ───────────────────────────────────────────── -->
+  <section id="features" style="padding: 96px 32px;">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-eyebrow" style="color:#3b82f6;">Platform Features</p>
+        <h2 class="section-h2">Everything your team needs</h2>
+        <p class="section-sub">Built specifically for NEMT operations — not adapted from generic software.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <div class="feature-title">Smart Ride Scheduling</div>
+          <div class="feature-desc">Call center reps schedule rides in under 2 minutes. Member lookup, eligibility check, vehicle matching, and provider assignment — all in one flow.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🚗</div>
+          <div class="feature-title">Real-Time Dispatch Board</div>
+          <div class="feature-desc">Transportation providers see incoming rides instantly, assign drivers with one tap, and track en-route status live. No more phone tag.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✅</div>
+          <div class="feature-title">Eligibility Verification</div>
+          <div class="feature-desc">Instant benefit checks against member plans before any ride is booked. Catches coverage gaps, ride limits, and prior auth requirements automatically.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <div class="feature-title">Operations Dashboard</div>
+          <div class="feature-desc">Admins get a real-time view of every ride, provider performance, on-time rates, payer mix, and volume trends across the entire network.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">Automated Member Notifications</div>
+          <div class="feature-desc">SMS and email confirmations, day-of reminders, and driver dispatch alerts go out automatically. Members always know what's happening.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👥</div>
+          <div class="feature-title">Multi-Role Access Control</div>
+          <div class="feature-desc">Call center agents, providers, drivers, and admins each see exactly what they need. Role-based access with MFA keeps PHI protected.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ───────────────────────────────────────── -->
+  <section id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-eyebrow" style="color:#06b6d4;">How It Works</p>
+        <h2 class="section-h2">From call to completion</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-connector"></div>
+          <div class="step-number">01</div>
+          <div class="step-title">Member Calls In</div>
+          <div class="step-desc">A health plan member calls your call center requesting a ride to a medical appointment.</div>
+        </div>
+        <div class="step">
+          <div class="step-connector"></div>
+          <div class="step-number">02</div>
+          <div class="step-title">Agent Verifies &amp; Books</div>
+          <div class="step-desc">The agent looks up the member, checks eligibility in real-time, selects the right vehicle, and dispatches a provider — in under 2 minutes.</div>
+        </div>
+        <div class="step">
+          <div class="step-connector"></div>
+          <div class="step-number">03</div>
+          <div class="step-title">Provider Receives Ride</div>
+          <div class="step-desc">The transportation company gets an instant notification with all ride details and member information. They assign a driver.</div>
+        </div>
+        <div class="step">
+          <div class="step-connector"></div>
+          <div class="step-number">04</div>
+          <div class="step-title">Member Gets Updates</div>
+          <div class="step-desc">Automated SMS confirmations and day-of reminders go to the member. A dispatch alert fires when the driver is en route.</div>
+        </div>
+        <div class="step">
+          <div class="step-number">05</div>
+          <div class="step-title">Ride Completed</div>
+          <div class="step-desc">The driver marks the trip complete. The system logs it, closes the authorization, and triggers a satisfaction SMS — fully automated.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Testimonials ───────────────────────────────────────── -->
+  <section id="testimonials" style="padding: 80px 32px;">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-eyebrow" style="color:#8b5cf6;">Customer Stories</p>
+        <h2 class="section-h2" style="font-size:clamp(24px,3.5vw,38px);">Trusted by NEMT teams</h2>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-quote-mark">"</div>
+          <p class="testimonial-quote">We went from scheduling rides by fax to having our entire call center on NEMT Hub in two weeks. Our no-show rate dropped 34% in the first month.</p>
+          <div class="testimonial-author">
+            <div class="avatar">MS</div>
+            <div>
+              <div class="author-name">Dr. Maria Santos</div>
+              <div class="author-title">Operations Director, Rio Grande Health Plan</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-quote-mark">"</div>
+          <p class="testimonial-quote">The dispatch board is exactly what we needed. Our drivers know where to go, members get texts automatically, and I can see everything from one screen.</p>
+          <div class="testimonial-author">
+            <div class="avatar">JO</div>
+            <div>
+              <div class="author-name">James Ortega</div>
+              <div class="author-title">CEO, ValleyStar Medical Transport</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-quote-mark">"</div>
+          <p class="testimonial-quote">The eligibility check alone saves our team hours every week. We used to manually verify every ride — now it takes two seconds.</p>
+          <div class="testimonial-author">
+            <div class="avatar">SW</div>
+            <div>
+              <div class="author-name">Sandra Wu</div>
+              <div class="author-title">NEMT Coordinator, Coastal Care Network</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Pricing ────────────────────────────────────────────── -->
+  <section id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-eyebrow" style="color:#4ade80;">Pricing</p>
+        <h2 class="section-h2">Simple, transparent pricing</h2>
+        <p class="section-sub" style="max-width:400px;">All plans include a 30-day free trial. No setup fees.</p>
+      </div>
+      <div class="pricing-grid">
+        <!-- Starter -->
+        <div class="pricing-card">
+          <div class="pricing-name">Starter</div>
+          <div class="pricing-price-row"><span class="pricing-price">$299</span><span class="pricing-period">/mo</span></div>
+          <div class="pricing-rides">Up to 500 rides/mo</div>
+          <div class="pricing-features">
+            <div class="pricing-feature"><span class="pricing-check" style="color:#38bdf8;">✓</span><span class="pricing-feature-text">Call center scheduling</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#38bdf8;">✓</span><span class="pricing-feature-text">Provider dispatch board</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#38bdf8;">✓</span><span class="pricing-feature-text">Member profiles</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#38bdf8;">✓</span><span class="pricing-feature-text">SMS notifications</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#38bdf8;">✓</span><span class="pricing-feature-text">Email support</span></div>
+          </div>
+          <button class="pricing-btn" onclick="openModal()">Start Free Trial</button>
+        </div>
+        <!-- Growth (highlighted) -->
+        <div class="pricing-card highlight">
+          <div class="pricing-badge">MOST POPULAR</div>
+          <div class="pricing-name">Growth</div>
+          <div class="pricing-price-row"><span class="pricing-price">$799</span><span class="pricing-period">/mo</span></div>
+          <div class="pricing-rides">Up to 2,500 rides/mo</div>
+          <div class="pricing-features">
+            <div class="pricing-feature"><span class="pricing-check" style="color:#3b82f6;">✓</span><span class="pricing-feature-text">Everything in Starter</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#3b82f6;">✓</span><span class="pricing-feature-text">Admin analytics dashboard</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#3b82f6;">✓</span><span class="pricing-feature-text">Eligibility verification</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#3b82f6;">✓</span><span class="pricing-feature-text">Multi-provider management</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#3b82f6;">✓</span><span class="pricing-feature-text">MFA &amp; role-based access</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#3b82f6;">✓</span><span class="pricing-feature-text">Phone support</span></div>
+          </div>
+          <button class="pricing-btn primary" onclick="openModal()">Start Free Trial</button>
+        </div>
+        <!-- Enterprise -->
+        <div class="pricing-card">
+          <div class="pricing-name">Enterprise</div>
+          <div class="pricing-price-row"><span class="pricing-price">Custom</span></div>
+          <div class="pricing-rides">Unlimited rides</div>
+          <div class="pricing-features">
+            <div class="pricing-feature"><span class="pricing-check" style="color:#8b5cf6;">✓</span><span class="pricing-feature-text">Everything in Growth</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#8b5cf6;">✓</span><span class="pricing-feature-text">Custom integrations</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#8b5cf6;">✓</span><span class="pricing-feature-text">BAA for HIPAA compliance</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#8b5cf6;">✓</span><span class="pricing-feature-text">Dedicated account manager</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#8b5cf6;">✓</span><span class="pricing-feature-text">SLA guarantee</span></div>
+            <div class="pricing-feature"><span class="pricing-check" style="color:#8b5cf6;">✓</span><span class="pricing-feature-text">On-site training</span></div>
+          </div>
+          <button class="pricing-btn purple-btn" onclick="openModal()">Contact Sales</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ────────────────────────────────────────────────── -->
+  <section id="cta">
+    <div class="cta-bg"></div>
+    <div class="cta-content">
+      <h2 class="cta-h2">Ready to modernize your NEMT operations?</h2>
+      <p class="cta-sub">Join 50+ organizations scheduling rides smarter. Setup takes less than 10 minutes.</p>
+      <div class="cta-btns">
+        <button class="btn-cta-primary" onclick="openModal()">Request a Demo →</button>
+        <a href="/signup" class="btn-cta-secondary">Start Free Trial</a>
+      </div>
+      <p class="cta-note">Free 30-day trial &nbsp;·&nbsp; No credit card &nbsp;·&nbsp; Cancel anytime</p>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <div class="footer-logo-icon">N</div>
+        <span class="footer-logo-text">NEMT Hub</span>
+      </div>
+      <div class="footer-links">
+        <a href="#" class="footer-link">Privacy Policy</a>
+        <a href="#" class="footer-link">Terms of Service</a>
+        <a href="#" class="footer-link">HIPAA Compliance</a>
+        <a href="#" class="footer-link">Contact</a>
+      </div>
+      <p class="footer-copy">© 2026 NEMT Hub. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ── Demo Request Modal ──────────────────────────────────── -->
+  <div id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">×</button>
+
+      <!-- Form state -->
+      <div id="modal-form">
+        <p class="modal-title">Request a Demo</p>
+        <p class="modal-sub">See NEMT Hub live with your use case. We'll reach out within one business day.</p>
+        <div class="form-gap">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <input id="f-name"    class="form-input" placeholder="Jordan Martinez" />
+              <div id="e-name"  class="form-error" style="display:none;">⚠ Required</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Work Email *</label>
+              <input id="f-email" type="email" class="form-input" placeholder="you@company.com" />
+              <div id="e-email" class="form-error" style="display:none;">⚠ Valid email required</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Organization *</label>
+            <input id="f-company" class="form-input" placeholder="Rio Grande Health Plan" />
+            <div id="e-company" class="form-error" style="display:none;">⚠ Required</div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input id="f-phone" class="form-input" placeholder="(956) 800-0000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Your Role</label>
+              <select id="f-role" class="form-select">
+                <option value="">Select…</option>
+                <option>Operations Director</option>
+                <option>NEMT Coordinator</option>
+                <option>IT / Technology</option>
+                <option>Executive / Owner</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monthly Ride Volume</label>
+            <select id="f-volume" class="form-select">
+              <option value="">Select range…</option>
+              <option>Under 100</option>
+              <option>100–500</option>
+              <option>500–2,000</option>
+              <option>2,000+</option>
+            </select>
+          </div>
+          <button class="submit-btn" id="submit-btn" onclick="submitForm()">
+            Request Demo →
+          </button>
+        </div>
+      </div>
+
+      <!-- Success state -->
+      <div id="modal-success" class="modal-success" style="display:none;">
+        <div class="success-emoji">🎉</div>
+        <p class="success-title">Request received!</p>
+        <p class="success-sub" id="success-msg">We'll reach out within one business day to schedule your demo.</p>
+        <button class="success-close" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── JavaScript ─────────────────────────────────────────── -->
+  <script>
+    // ── Navbar scroll effect ────────────────────────────────
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // ── Smooth scroll ───────────────────────────────────────
+    function scrollTo(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ── Modal ───────────────────────────────────────────────
+    function openModal() {
+      document.getElementById('modal-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+      // Reset form after closing
+      setTimeout(() => {
+        document.getElementById('modal-form').style.display = 'block';
+        document.getElementById('modal-success').style.display = 'none';
+        ['name','email','company','phone'].forEach(f => {
+          const el = document.getElementById('f-' + f);
+          if (el) el.value = '';
+        });
+        clearErrors();
+      }, 300);
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ── Form validation & submit ────────────────────────────
+    function clearErrors() {
+      ['name','email','company'].forEach(f => {
+        document.getElementById('f-' + f)?.classList.remove('error');
+        const err = document.getElementById('e-' + f);
+        if (err) err.style.display = 'none';
+      });
+    }
+
+    function showError(field, msg) {
+      const input = document.getElementById('f-' + field);
+      const err   = document.getElementById('e-' + field);
+      if (input) input.classList.add('error');
+      if (err) { err.textContent = '⚠ ' + msg; err.style.display = 'block'; }
+    }
+
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function submitForm() {
+      clearErrors();
+      const name    = document.getElementById('f-name')?.value.trim();
+      const email   = document.getElementById('f-email')?.value.trim();
+      const company = document.getElementById('f-company')?.value.trim();
+      let valid = true;
+
+      if (!name)              { showError('name',    'Required');            valid = false; }
+      if (!validateEmail(email)) { showError('email', 'Valid email required'); valid = false; }
+      if (!company)           { showError('company', 'Required');            valid = false; }
+      if (!valid) return;
+
+      // Show loading state
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Submitting…';
+
+      // Simulate API call — replace with real fetch() to your backend
+      setTimeout(() => {
+        document.getElementById('modal-form').style.display = 'none';
+        const msg = document.getElementById('success-msg');
+        if (msg) msg.innerHTML = `We'll reach out to <strong style="color:#94a3b8">${email}</strong> within one business day.`;
+        document.getElementById('modal-success').style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = 'Request Demo →';
+      }, 1200);
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && document.getElementById('modal-overlay').classList.contains('open')) {
+        const form = document.getElementById('modal-form');
+        if (form.style.display !== 'none') submitForm();
+      }
+    });
+  </script>
+
+</body>
+</html>
